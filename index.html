@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JUMMY Kitchen Wear</title>
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+  (function(){ emailjs.init('o3LTzmyjFBi--4KDP'); })();
+</script>
+
+<style>
+:root{ --purple:#7c3aed; --light:#faf5ff; --soft:#ede9fe; }
+*{ box-sizing:border-box; }
+body{ margin:0; font-family:'Segoe UI',sans-serif; background:var(--light); color:#2e1065; }
+header{ background:var(--purple); color:#fff; padding:16px; text-align:center; }
+h2,h3{ margin:8px 0; }
+.container{ padding:16px; max-width:520px; margin:auto; }
+.card{ background:#fff; border-radius:16px; padding:16px; box-shadow:0 8px 24px rgba(124,58,237,.15); }
+.grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+.cat{ background:var(--soft); padding:18px; border-radius:18px; text-align:center; font-weight:600; cursor:pointer; }
+input,button{ width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; font-size:15px; }
+input:focus{ outline:none; border-color:var(--purple); }
+button{ background:var(--purple); color:#fff; border:none; margin-top:10px; font-weight:600; }
+button.secondary{ background:#fff; color:var(--purple); border:2px solid var(--purple); }
+ul{ list-style:none; padding:0; }
+li{ margin-bottom:16px; }
+.row{ display:flex; gap:8px; align-items:center; }
+.qty{ width:70px; }
+.hidden{ display:none; }
+.total{ font-size:18px; font-weight:700; }
+.card img{ max-width:100%; height:auto; object-fit:cover; border-radius:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h2>💜 JUMMY KITCHEN WEARS</h2>
+</header>
+
+<div class="container" id="userForm">
+  <div class="card">
+    <h3>Your Details</h3>
+    <input id="name" placeholder="Full Name" />
+    <input id="email" placeholder="example@gmail.com" type="email" />
+    <input id="whatsapp" placeholder="Whatsapp no 2348162******" />
+    <button onclick="startShopping()">Start Shopping</button>
+  </div>
+</div>
+
+<div class="container hidden" id="categories">
+  <div class="card">
+    <h3>Categories</h3>
+    <div class="grid">
+      <div class="cat" onclick="openItems('Pots')">🍲 Pots</div>
+      <div class="cat" onclick="openItems('Gas')">🔥 Gas</div>
+      <div class="cat" onclick="openItems('Plates')">🍽 Plates</div>
+      <div class="cat" onclick="openItems('Buckets')">🪣 Buckets</div>
+      <div class="cat" onclick="openItems('Accessories')">🧂 Accessories</div>
+      <div class="cat" onclick="openItems('Other')">🛍 Other Products</div>
+    </div>
+    <button class="secondary" onclick="viewCart()">View Cart</button>
+  </div>
+</div>
+
+<div class="container hidden" id="itemsPage">
+  <div class="card">
+    <h3 id="itemTitle"></h3>
+    <ul id="itemsList"></ul>
+    <button class="secondary" onclick="backToCategories()">Back</button>
+  </div>
+</div>
+
+<div class="container hidden" id="cartPage">
+  <div class="card">
+    <h3>Your Cart</h3>
+    <ul id="cartList"></ul>
+    <p class="total">Total: ₦<span id="total"></span></p>
+    <button onclick="sendOrder()">Send Order</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+const products = {
+  Pots:[
+    {id:1,name:'Big Pot',price:10000,image:'big-pot.jpg'},
+    {id:2,name:'Medium Pot',price:5000,image:'medium-pot.jpg'}
+  ],
+  Gas:[
+    {id:3,name:'Gas Cooker',price:25000,image:'gas-cooker.jpg'},
+    {id:4,name:'Mini Gas',price:15000,image:'mini-gas.jpg'}
+  ],
+  Plates:[
+    {id:5,name:'Plate Set',price:7000,image:'plate-set.jpg'},
+    {id:6,name:'Decor Plates',price:15000,image:'decor-plates.jpg'}
+  ],
+  Buckets:[
+    {id:7,name:'Plastic Bucket',price:2000,image:'plastic-bucket.jpg'},
+    {id:8,name:'Metal Bucket',price:5000,image:'metal-bucket.jpg'}
+  ],
+  Accessories:[
+    {id:9,name:'Kitchen Tool set',price:1500,image:'spoon-holders.jpg'},
+    {id:10,name:'Spoon set',price:1200,image:'spoon-holder.jpg'}
+  ],
+  Other:[
+    {id:11,name:'Blender',price:2000,image:'creater.jpg'},
+    {id:12,name:'Four face cooker',price:40000,image:'stove.jpg'},
+    {id:13,name:'Washing machine',price:5000,image:'machine.jpg'},
+    {id:14,name:'Hot plates',price:15000,image:'hot-plate.jpg'}
+  ]
+};
+
+let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+function saveCart(){ localStorage.setItem('cart', JSON.stringify(cart)); }
+
+window.startShopping = function(){
+  const emailInput = document.getElementById('email');
+  const emailRegex = /^[\w.-]+@gmail\.com$/;
+  if(!emailInput || !emailInput.value || !emailRegex.test(emailInput.value.trim())){
+    alert('Email must be filled and be a valid Gmail'); return;
+  }
+  userForm.classList.add('hidden');
+  categories.classList.remove('hidden');
+};
+
+window.openItems = function(cat){
+  categories.classList.add('hidden');
+  itemsPage.classList.remove('hidden');
+  itemTitle.innerText = cat;
+  itemsList.innerHTML = '';
+  products[cat].forEach(p => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class='card' style='text-align:center; padding:8px; border-radius:12px;'>
+        <img src='${p.image}' alt='${p.name}'>
+        <strong>${p.name}</strong><br>
+        ₦${p.price}<br>
+        <input class='qty' type='number' min='1' value='1' id='q_${p.id}' style='margin:5px 0;'>
+        <button onclick="addToCart(${p.id}, '${p.name}', ${p.price})">Add</button>
+      </div>`;
+    itemsList.appendChild(li);
+  });
+};
+
+window.addToCart = function(id,name,price){
+  const qty = document.getElementById('q_'+id).value;
+  cart.push({id,name,price,qty});
+  saveCart();
+  alert('Added 💜');
+};
+
+window.backToCategories = function(){
+  itemsPage.classList.add('hidden');
+  categories.classList.remove('hidden');
+};
+
+window.viewCart = function(){
+  categories.classList.add('hidden');
+  cartPage.classList.remove('hidden');
+  cartList.innerHTML = '';
+  let total = 0;
+  cart.forEach(i => {
+    const sub = i.price * i.qty;
+    total += sub;
+    const li = document.createElement('li');
+    li.innerText = `${i.name} x${i.qty} - ₦${sub}`;
+    cartList.appendChild(li);
+  });
+  document.getElementById('total').innerText = total;
+};
+
+// FINAL SEND ORDER FUNCTION
+window.sendOrder = function(){
+  let itemsText = '';
+  let total = 0;
+
+  cart.forEach(i => {
+    itemsText += `${i.name} x${i.qty} (₦${i.price * i.qty})\n`;
+    total += i.price * i.qty;
+  });
+
+  // 1️⃣ Send order to admin
+  emailjs.send('service_b6xtudj','template_u8ydw1q',{
+    buyer_name: document.getElementById('name').value,
+    buyer_email: document.getElementById('email').value,
+    buyer_whatsapp: document.getElementById('whatsapp').value,
+    order_items: itemsText,
+    order_total: total
+  })
+  .then(() => {
+    // 2️⃣ Auto-reply to customer
+    emailjs.send('service_b6xtudj','template_09gfsr5',{
+      buyer_name: document.getElementById('name').value,
+      buyer_email: document.getElementById('email').value,
+      buyer_whatsapp: document.getElementById('whatsapp').value
+    });
+
+    alert('Order placed successfully 💜');
+    localStorage.removeItem('cart');
+    location.reload();
+  })
+  .catch(() => {
+    alert('Order failed. Please try again.');
+  });
+};
+
+});
+</script>
+</body>
+</html>
